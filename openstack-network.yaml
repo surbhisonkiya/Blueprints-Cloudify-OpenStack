@@ -1,0 +1,132 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://cloudify.co/spec/cloudify/4.5.5/types.yaml
+  - plugin:cloudify-openstack-plugin?version=3.1.0
+
+
+inputs:
+
+  region:
+    type: string
+    description: The Openstack region.
+    default: RegionOne
+
+  external_network_id:
+    type: string
+    description: A network that provisions floating IPs.
+    default: 61251447-8228-4ef0-a90b-1db0bd38af1d
+
+  network_id:
+    type: string
+    description: A name for your new Openstack Network.
+    default: cloudify-hello-world-network
+
+  subnet_id:
+    type: string
+    description: A name for your new Openstack Subnet.
+    default: cloudify-hello-world-subnet
+
+
+dsl_definitions:
+
+  openstack_config: &openstack_config
+    auth_url: { get_secret: openstack_auth_url }
+    region_name: { get_input: region }
+    project_name: { get_secret: openstack_tenant_name }
+    username: { get_secret: openstack_username }
+    password: { get_secret: openstack_password }
+    user_domain_name: { get_secret: user_domain_name }
+    project_domain_name: { get_secret: project_domain_name }
+
+node_templates:
+
+  public_subnet:
+    type: cloudify.nodes.openstack.Subnet
+    properties:
+      client_config: *openstack_config
+      resource_config:
+        name: { get_input: subnet_id }
+        ip_version: 4
+        cidr: 172.24.4.0/24
+        dns_nameservers: [8.8.4.4, 8.8.8.8]
+        allocation_pools:
+        - start: 172.24.4.2
+          end: 172.24.4.254
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: public_network
+      - type: cloudify.relationships.openstack.subnet_connected_to_router
+        target: public_network_router
+
+  private_subnet:
+    type: cloudify.nodes.openstack.Subnet
+    properties:
+      client_config: *openstack_config
+      resource_config:
+        name: { get_input: subnet_id }
+        ip_version: 4
+        cidr: 10.10.2.0/24
+        dns_nameservers: [8.8.4.4, 8.8.8.8]
+        allocation_pools:
+        - start: 10.10.2.2
+          end: 10.10.2.254
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: private_network
+      - type: cloudify.relationships.openstack.subnet_connected_to_router
+        target: public_network_router
+
+  public_network:
+    type: cloudify.nodes.openstack.Network
+    properties:
+      client_config: *openstack_config
+      resource_config:
+        name: { get_input: network_id }
+
+  private_network:
+    type: cloudify.nodes.openstack.Network
+    properties:
+      client_config: *openstack_config
+      resource_config:
+        name: { get_input: network_id }
+
+  public_network_router:
+    type: cloudify.nodes.openstack.Router
+    properties:
+      client_config: *openstack_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: external_network
+
+  external_network:
+    type: cloudify.nodes.openstack.Network
+    properties:
+      client_config: *openstack_config
+      use_external_resource: true
+      resource_config:
+        name: { get_input: external_network_id }
+        kwargs:
+          routing:
+            external: true
+
+outputs:
+
+  external_network:
+    value: { get_attribute: [ external_network, external_id ] }
+
+  public_network_router:
+    value: { get_attribute: [ public_network_router, external_id ] }
+
+  public_network:
+    value: { get_attribute: [ public_network, external_id ] }
+
+  private_network:
+    value: { get_attribute: [ private_network, external_id ] }
+
+  public_subnet:
+    value: { get_attribute: [ public_subnet, external_id ] }
+
+  private_subnet:
+    value: { get_attribute: [ private_subnet, external_id ] }
+
