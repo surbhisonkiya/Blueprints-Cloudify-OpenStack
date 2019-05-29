@@ -1,0 +1,28 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: Install Drupal7 on infrastructure.
+
+node_templates:
+
+  hello-world:
+    type: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            site_yaml_path: apache2/playbook.yaml
+            sources: 
+	      webserver:
+		hosts:
+		  hello-world:
+                        ansible_host: {get_input: external_network_id}
+                        ansible_port: 22
+                        ansible_user: {get_input: agent_user}
+                        ansible_ssh_pass: {get_secret: agent_key_private}
+                        ansible_ssh_private_key_file: /root/.ssh/id_rsa
+                        ansible_become: true
+                        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    relationships:
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: vm
