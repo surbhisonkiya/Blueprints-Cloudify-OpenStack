@@ -1,0 +1,37 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://cloudify.co/spec/cloudify/4.5.5/types.yaml
+  ...
+
+inputs:
+  ...
+
+dsl_definitions:
+
+  openstack_config: &openstack_config
+    ...
+
+node_templates:
+
+  vm:
+    ...   
+   
+  cloud_init:
+    ...
+
+outputs:
+  ...
+
+groups:
+  vm_and_ip:
+    members: [vm, port]
+
+policies:
+  scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances: 3
+    targets: [vm_and_port]
+
+
