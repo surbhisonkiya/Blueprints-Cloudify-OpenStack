@@ -5,7 +5,6 @@ imports:
   - plugin:cloudify-openstack-plugin?version=3.1.0
   - plugin:cloudify-ansible-plugin
   - plugin:cloudify-utilities-plugin
-  - ansible.yaml
 
 inputs:
 
@@ -19,7 +18,7 @@ inputs:
 
   image:
     type: string
-    description: The UUID of an Ubuntu Trusty 14.04 image in your Openstack account.
+    description: The UUID of an Ubuntu Trusty 16.04 image in your Openstack account.
 
   flavor:
     type: string
@@ -28,16 +27,15 @@ inputs:
   network_id:
     type: string
     description: A name for your new Openstack Network.
-    default: cloudify-hello-world-network
+    default: cloudify-network
 
   subnet_id:
     type: string
     description: A name for your new Openstack Subnet.
-    default: cloudify-hello-world-subnet
+    default: cloudify-subnet
 
   agent_user:
-    description: >
-      The username of the agent running on the instance created from the image.
+    description: The username of the agent running on the instance created from the image.
     default: 'ubuntu'
 
 dsl_definitions:
@@ -126,8 +124,8 @@ node_templates:
     properties:
       client_config: *openstack_config
       resource_config:
-        name: hello-security-group
-        description: 'hello security group'
+        name: cloudify-security-group
+        description: 'cloudify security group'
       security_group_rules:
         - direction: ingress
           protocol: tcp
