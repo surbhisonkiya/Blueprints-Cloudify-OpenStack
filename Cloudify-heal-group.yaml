@@ -1,0 +1,41 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://cloudify.co/spec/cloudify/4.5.5/types.yaml
+  ...
+
+inputs:
+  ...
+
+dsl_definitions:
+  openstack_config: &openstack_config
+    ...
+
+node_templates:
+
+  vm:
+    ...   
+   
+  cloud_init:
+    ...
+
+outputs:
+  ...
+
+groups:
+  vm:
+    members: [vm]
+    policies:
+      healing_policy:
+        type: cloudify.policies.host_failure
+        properties:
+           service:
+             - example
+        triggers:
+          heal_trigger:
+            type: cloudify.policies.triggers.execute_workflow
+            parameters:
+              workflow: heal          
+              workflow_parameters:
+                node_instance_id: { get_property: [SELF, node_id] }
+                diagnose_value: { get_property: [SELF, diagnose] }
